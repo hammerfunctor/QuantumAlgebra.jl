@@ -22,6 +22,9 @@ mystring(x::Complex) = @sprintf "(%g%+gi)" real(x) imag(x)
 mystring(x::Complex{Rational{T}}) where T = @sprintf "\\left(%s%s%si\\right)" mystring(real(x)) (imag(x)>=0 ? "+" : "-") mystring(abs(imag(x)))
 
 Base.show(io::IO, ::MIME"text/latex", A::Operator) = print(io,"\$",latex(A),"\$")
+Base.show(io::IO, ::MIME"text/latex", A::Array{<:Operator}) = print(io,"\$",latex(A),"\$")
+Base.show(io::IO, ::MIME"text/latex", A::Tuple{Vararg{<:Operator}}) = print(io,"\$",latex(A),"\$")
+
 latex(A::σ) = string("\\sigma_{$(A.a)",length(A.inds)>0 ? ",$(A.inds...)}" : "}")
 latexindstr(inds::OpIndices) = length(inds)==0 ? "" : "_{$(inds...)}"
 latex(A::δ) = "δ" * latexindstr(A.inds)
@@ -36,3 +39,9 @@ latex(A::OpSum) = string(latex(A.A)," + ",latex(A.B))
 latex(A::ExpVal) = "\\langle $(latex(A.A)) \\rangle"
 latex(A::Corr) = "\\langle $(latex(A.A)) \\rangle_{c}"
 latex(A::OpSumAnalytic) = string("\\sum_{$(A.ind)}",latex(A.A))
+latex(x::Array{<:Operator,1}) = "\\left( \\begin{aligned}" * join([latex(A) for A in x], "\\\\") * "\\end{aligned} \\right)"
+latex(x::Array{<:Operator,2}) = 
+    "\\left( \\begin{matrix}" * 
+    join([join([latex(A) for A in x[i,:]], " & ") for i in 1:size(x)[1]], "\\\\") *
+    "\\end{matrix} \\right)"
+latex(x::Tuple{Vararg{<:Operator}}) = "\\left(" * join([latex(A) for A in x], ",") * "\\right)"
